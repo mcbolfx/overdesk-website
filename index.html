@@ -2155,6 +2155,41 @@ body.light-mode #appTesters a svg{
   stroke: #7c3aed !important;
 }
 
+
+/* Early Access nav button */
+.nav-early-access{
+  display:inline-flex;
+  align-items:center;
+  padding:0.38rem 0.9rem;
+  border-radius:999px;
+  background:rgba(0,210,255,0.08);
+  border:1px solid rgba(0,210,255,0.35);
+  color:#00d2ff;
+  font-size:0.75rem;
+  font-weight:700;
+  text-decoration:none;
+  letter-spacing:0.04em;
+  white-space:nowrap;
+  transition:background 0.2s, border-color 0.2s;
+  margin-left:0.6rem;
+}
+.nav-early-access:hover{
+  background:rgba(0,210,255,0.16);
+  border-color:rgba(0,210,255,0.6);
+}
+body.light-mode .nav-early-access{
+  background:rgba(124,58,237,0.07);
+  border-color:rgba(124,58,237,0.3);
+  color:#7c3aed;
+}
+body.light-mode .nav-early-access:hover{
+  background:rgba(124,58,237,0.14);
+  border-color:rgba(124,58,237,0.6);
+}
+@media(max-width:768px){
+  .nav-early-access{ display:none; }
+}
+
 </style>
 </head>
 <body>
@@ -2217,6 +2252,12 @@ body.light-mode #appTesters a svg{
     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
   </button>
+  <a
+    href="https://pub-fa90e61de7da416aba6ccf171616d1d1.r2.dev/Overdesk%20Nexus%20Setup%201.0.0.exe"
+    download="Overdesk Nexus Setup 1.0.0.exe"
+    class="nav-early-access"
+    title="Early Access — Overdesk Nexus v1.0.0 for Windows"
+  >Early Access</a>
   </div>
 </nav>
 
@@ -2835,7 +2876,7 @@ body.light-mode #appTesters a svg{
       <polyline points="7 10 12 15 17 10"/>
       <line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
-    Download Nexus Beta &nbsp;<span style="font-size:0.72rem;opacity:0.6;font-weight:500;">v1.0.0 · Windows</span>
+    Early Access
   </a>
 </div>
 
