@@ -1255,6 +1255,28 @@ footer{background:#0c0c0c;border-top:0.5px solid rgba(255,255,255,0.06);padding:
   font-size:1.05rem;
 }
 
+/* ── NEXUS CROWN BADGE ── */
+.nexus-crown{
+  position:absolute;
+  top:2.4rem;
+  left:2rem;
+  width:44px;
+  height:44px;
+  object-fit:contain;
+  z-index:10;
+  filter:drop-shadow(0 2px 8px rgba(255,180,0,0.5));
+  pointer-events:none;
+}
+@media(max-width:768px){
+  .nexus-crown{
+    top:0.9rem;
+    left:auto;
+    right:0.9rem;
+    width:36px;
+    height:36px;
+  }
+}
+
 
 
 
@@ -2324,7 +2346,7 @@ body.light-mode .nav-early-access:hover{
 
   <!-- App 2: Overdesk Nexus -->
   <div class="app-block fade-in app-block-large" style="position:relative;">
-    <img src="https://pub-fa90e61de7da416aba6ccf171616d1d1.r2.dev/crown.png" alt="Most Popular" style="position:absolute;top:2.4rem;left:2rem;width:44px;height:44px;object-fit:contain;z-index:10;filter:drop-shadow(0 2px 8px rgba(255,180,0,0.5));pointer-events:none;">
+    <img src="https://pub-fa90e61de7da416aba6ccf171616d1d1.r2.dev/crown.png" alt="Most Popular" class="nexus-crown">
     <div class="grainient-bg" id="nexusGrainient"></div>
     <div class="grainient-scrim"></div>
     <div class="app-info">
