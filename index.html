@@ -48,9 +48,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
 .logo-name{font-weight:900;font-size:1.1rem;color:#fff;letter-spacing:-0.04em;white-space:nowrap}
 .logo-char{display:inline-block}
 @keyframes jump{0%,100%{transform:translateY(0) rotate(-1deg)}35%{transform:translateY(-11px) rotate(2.5deg)}65%{transform:translateY(-4px) rotate(-1deg)}}
-.nav-links{display:flex;gap:2rem;align-items:center;position:absolute;left:50%;transform:translateX(-50%);}
-.nav-links>a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color .2s}
-.nav-links>a:hover{color:#fff}
+.nav-links{display:flex;align-items:center;gap:3px;position:absolute;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;}
+.gpill-nav{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 1.15rem;border-radius:999px;text-decoration:none;font-size:0.82rem;font-weight:600;white-space:nowrap;cursor:pointer;color:rgba(255,255,255,0.6);}
+.gpill-nav .gpill-circle{background:#7c3aed;}
+.gpill-nav .gpill-label-hover{color:#fff;}
 .btn-nav{background:rgba(61,129,227,0.12);color:#3D81E3;border:0.5px solid rgba(61,129,227,0.4);border-radius:999px;padding:0.48rem 1.3rem;font-size:0.83rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;font-family:'Inter',sans-serif;}
 .btn-nav:hover{background:rgba(61,129,227,0.25);border-color:#3D81E3}
 
@@ -1579,8 +1580,9 @@ body.light-mode nav{
   border-bottom-color:rgba(0,0,0,0.08);
   box-shadow:0 1px 12px rgba(0,0,0,0.08);
 }
-body.light-mode .nav-links a{ color:#0c0c0c; }
-body.light-mode .nav-links a:hover{ color:#7c3aed; }
+body.light-mode .gpill-nav{ color:#0c0c0c; }
+body.light-mode .nav-links{ background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.08); }
+
 body.light-mode .btn-nav{
   background:#7c3aed;
   color:#fff;
@@ -1879,7 +1881,7 @@ body.light-mode .bundle-bar{
 }
 
 /* nav links color fix */
-body.light-mode .nav-links a{ color: #0c0c0c !important; }
+body.light-mode .gpill-nav{ color: #0c0c0c !important; }
 body.light-mode .logo-name{ color: #0c0c0c !important; }
 
 /* Who grid card text */
@@ -2044,7 +2046,7 @@ body.light-mode .bundle-bar{
 }
 
 /* nav links color fix */
-body.light-mode .nav-links a{ color: #0c0c0c !important; }
+body.light-mode .gpill-nav{ color: #0c0c0c !important; }
 body.light-mode .logo-name{ color: #0c0c0c !important; }
 
 /* Who grid card text */
@@ -2115,8 +2117,6 @@ body.light-mode .promo-ticker-track span{
 
 /* All text that defaults to white — override dark in light mode */
 body.light-mode .logo-name,
-body.light-mode .nav-links > a,
-body.light-mode .nav-links > a:hover,
 body.light-mode .hero-title,
 body.light-mode .hero-sub strong,
 body.light-mode .quote-text,
@@ -2445,9 +2445,9 @@ body.light-mode .nav-early-access:hover{
     <span class="logo-name" id="logo-text"></span>
   </a>
   <div class="nav-links">
-    <a href="#features">Features</a>
-    <a href="#apps">The Suite</a>
-    <a href="#pricing">Pricing</a>
+    <a href="#features" class="gpill gpill-nav"><span class="gpill-circle"></span><span class="gpill-label-stack"><span class="gpill-label">Features</span><span class="gpill-label-hover">Features</span></span></a>
+    <a href="#apps" class="gpill gpill-nav"><span class="gpill-circle"></span><span class="gpill-label-stack"><span class="gpill-label">The Suite</span><span class="gpill-label-hover">The Suite</span></span></a>
+    <a href="#pricing" class="gpill gpill-nav"><span class="gpill-circle"></span><span class="gpill-label-stack"><span class="gpill-label">Pricing</span><span class="gpill-label-hover">Pricing</span></span></a>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;">
   <button class="theme-btn" id="themeBtn" aria-label="Toggle light/dark mode">
