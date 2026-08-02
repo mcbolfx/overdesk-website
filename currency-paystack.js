@@ -17,7 +17,7 @@
   'use strict';
 
   // ---- CONFIG: fill these in ----
-  var PAYSTACK_PUBLIC_KEY = 'pk_live_REPLACE_ME'; // <-- put your real Paystack PUBLIC key here
+  var PAYSTACK_PUBLIC_KEY = 'pk_test_7d99dac45a30695424e3263f06f5d3e3204743de'; // TEST key — swap to pk_live_... once you're ready to go live
   var USD_TO_NGN_RATE = 1000; // fixed rate: $1 = ₦1000
 
   var PRODUCT_NAMES = {
@@ -27,6 +27,10 @@
     bundle: 'Overdesk Full Suite (Bundle)',
     everyone: 'Overdesk Checklist — Everyone Edition'
   };
+
+  function formatNgnK(ngn) {
+    return (ngn % 1000 === 0) ? (ngn / 1000) + 'K' : (ngn / 1000).toFixed(1) + 'K';
+  }
 
   // ---- 1. Detect country (cached in localStorage for 24h) ----
   function getCachedGeo() {
@@ -75,10 +79,11 @@
     document.querySelectorAll('[data-usd]').forEach(function (el) {
       var usd = parseFloat(el.getAttribute('data-usd'));
       if (isNaN(usd)) return;
-      var ngn = Math.round(usd * USD_TO_NGN_RATE).toLocaleString('en-NG');
+      var ngn = usd * USD_TO_NGN_RATE;
+      var display = formatNgnK(ngn);
       // Only overwrite if this element is a price display (has data-usd and starts with $)
       if (el.textContent.trim().indexOf('$') === 0) {
-        el.textContent = '\u20A6' + ngn;
+        el.textContent = '\u20A6' + display;
       }
     });
 
@@ -113,7 +118,7 @@
     overlay.innerHTML =
       '<div style="background:#141417;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2rem;max-width:380px;width:100%;font-family:Inter,sans-serif;">' +
         '<h3 style="color:#fff;font-size:1.1rem;font-weight:800;margin:0 0 0.4rem;">' + productName + '</h3>' +
-        '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0 0 1.2rem;">\u20A6' + ngnAmount.toLocaleString('en-NG') + ' \u2014 enter your email to continue to Paystack.</p>' +
+        '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0 0 1.2rem;">\u20A6' + formatNgnK(ngnAmount) + ' \u2014 enter your email to continue to Paystack.</p>' +
         '<input type="email" id="opStackEmail" placeholder="you@example.com" required style="width:100%;box-sizing:border-box;padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-size:0.9rem;margin-bottom:1rem;">' +
         '<button id="opStackContinue" style="width:100%;padding:0.85rem;border:none;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#00d2ff);color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;">Continue to Payment</button>' +
         '<button id="opStackCancel" style="width:100%;padding:0.6rem;border:none;background:none;color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:0.6rem;cursor:pointer;">Cancel</button>' +
