@@ -1,28 +1,71 @@
 /* ============================================================
-   Overdesk — Currency Detection + Paystack Checkout (Nigeria)
+   Overdesk — Currency Detection + Paystack Checkout
+   (Nigeria, Ghana, South Africa, Kenya, Côte d'Ivoire)
    ============================================================
    What this does:
-   1. Detects if the visitor is in Nigeria (client-side geo-IP lookup, cached).
-   2. If Nigerian: swaps displayed prices from USD to NGN (fixed rate below),
-      and swaps "Purchase" buttons to open a currency-preview + checkout flow
-      via Paystack, instead of linking straight to Gumroad.
+   1. Detects which country the visitor is in (client-side geo-IP, cached).
+   2. If they're in one of the 5 markets Paystack covers, swaps displayed
+      prices from USD to that country's local currency (fixed rates below),
+      and swaps "Purchase" buttons to open a Paystack checkout instead of
+      linking straight to Gumroad.
    3. Everyone else: site behaves exactly as before (Gumroad links untouched).
-   4. Paystack's own script is only loaded the moment someone actually clicks
-      a purchase button — not proactively for every Nigerian visitor. This is
-      both lighter/faster and avoids loading third-party cookies before the
-      visitor has taken an action (works alongside cookie-consent.js).
+   4. Paystack's own script only loads the moment someone actually clicks a
+      purchase button — not proactively for every visitor from these
+      countries. Lighter/faster, and avoids loading third-party cookies
+      before the visitor has taken an action (works with cookie-consent.js).
 
-   IMPORTANT — before this goes live, set your real Paystack PUBLIC key below.
-   This is safe to expose in client-side code (it is NOT the secret key).
-   Find it in: Paystack Dashboard → Settings → API Keys & Webhooks.
+   ============================================================
+   IMPORTANT — Paystack accounts and currency
+   ============================================================
+   A single Paystack account can't process multiple currencies at once
+   (except Nigeria + Kenya, which can add USD alongside their base currency).
+   In practice this means: as you activate each new market below, you'll
+   likely need a SEPARATE Paystack sub-account configured for that country's
+   currency, each with its own PUBLIC key. Put each one in PAYSTACK_PUBLIC_KEY
+   below once you have it — until then, that market just won't get a
+   Paystack key and can be left as a placeholder (see NOTE per entry).
+
+   The exchange rates below are fixed/approximate starting points (similar
+   to the ₦1000 = $1 rate already agreed for Nigeria) — update them
+   periodically; they are NOT live-fetched.
    ============================================================ */
 
 (function () {
   'use strict';
 
-  // ---- CONFIG: fill these in ----
-  var PAYSTACK_PUBLIC_KEY = 'pk_test_7d99dac45a30695424e3263f06f5d3e3204743de'; // TEST key — swap to pk_live_... once you're ready to go live
-  var USD_TO_NGN_RATE = 1000; // fixed rate: $1 = ₦1000
+  // ---- CONFIG: one entry per supported market ----
+  var COUNTRY_CONFIG = {
+    NG: {
+      currency: 'NGN',
+      symbol: '\u20A6', // ₦
+      rate: 1000, // $1 = ₦1000
+      paystackKey: 'pk_test_7d99dac45a30695424e3263f06f5d3e3204743de' // TEST key — swap to pk_live_... when ready
+    },
+    GH: {
+      currency: 'GHS',
+      symbol: 'GH\u20B5', // GH₵
+      rate: 12, // approx $1 = GH₵12 — update as needed
+      paystackKey: 'pk_test_REPLACE_GH' // <-- add your Ghana Paystack sub-account public key
+    },
+    ZA: {
+      currency: 'ZAR',
+      symbol: 'R',
+      rate: 17, // approx $1 = R17 — update as needed
+      paystackKey: 'pk_test_REPLACE_ZA' // <-- add your South Africa Paystack sub-account public key
+    },
+    KE: {
+      currency: 'KES',
+      symbol: 'KSh',
+      rate: 130, // approx $1 = KSh130 — update as needed
+      paystackKey: 'pk_test_REPLACE_KE' // <-- add your Kenya Paystack sub-account public key
+    },
+    CI: {
+      currency: 'XOF',
+      symbol: 'CFA',
+      rate: 600, // approx $1 = 600 XOF — update as needed
+      paystackKey: 'pk_test_REPLACE_CI' // <-- add your Côte d'Ivoire Paystack sub-account public key
+    }
+  };
 
   var PRODUCT_NAMES = {
     app: 'Overdesk',
@@ -32,11 +75,12 @@
     everyone: 'Overdesk Checklist — Everyone Edition'
   };
 
-  function formatNgnFull(ngn) {
-    return ngn.toLocaleString('en-NG');
+  function formatAmountFull(amount) {
+    return Math.round(amount).toLocaleString('en-US');
   }
-  function formatNgnK(ngn) {
-    return (ngn % 1000 === 0) ? (ngn / 1000) + 'K' : (ngn / 1000).toFixed(1) + 'K';
+  function formatAmountK(amount) {
+    var thousands = amount / 1000;
+    return (amount % 1000 === 0) ? thousands + 'K' : thousands.toFixed(1) + 'K';
   }
 
   // ---- 1. Detect country (cached in localStorage for 24h) ----
@@ -75,22 +119,22 @@
         callback(code);
       })
       .catch(function () {
-        // If geo lookup fails, fail safe to non-Nigeria (default Gumroad/USD experience)
+        // If geo lookup fails, fail safe to default Gumroad/USD experience
         callback(null);
       });
   }
 
-  // ---- 2. Swap price displays + button behavior for Nigerian visitors ----
-  function applyNigeriaPricing() {
+  // ---- 2. Swap price displays + button behavior for a supported market ----
+  function applyLocalPricing(config) {
     // Swap price text
     document.querySelectorAll('[data-usd]').forEach(function (el) {
       var usd = parseFloat(el.getAttribute('data-usd'));
       if (isNaN(usd)) return;
-      var ngn = usd * USD_TO_NGN_RATE;
-      var display = formatNgnK(ngn);
+      var local = usd * config.rate;
+      var display = formatAmountK(local);
       // Only overwrite if this element is a price display (has data-usd and starts with $)
       if (el.textContent.trim().indexOf('$') === 0) {
-        el.textContent = '\u20A6' + display;
+        el.textContent = config.symbol + display;
       }
     });
 
@@ -105,7 +149,7 @@
         e.preventDefault();
         var product = btn.getAttribute('data-product');
         var usd = parseFloat(btn.getAttribute('data-usd'));
-        openConversionPreview(product, usd);
+        openCheckoutModal(config, product, usd);
       });
       // Update button label so it's clear this is a different payment path
       var svg = btn.querySelector('svg');
@@ -116,8 +160,8 @@
   }
 
   // ---- 3. Simple checkout modal: product, price, email, then Paystack ----
-  function openConversionPreview(productKey, usdAmount) {
-    var ngnAmount = Math.round(usdAmount * USD_TO_NGN_RATE);
+  function openCheckoutModal(config, productKey, usdAmount) {
+    var localAmount = Math.round(usdAmount * config.rate);
     var productName = PRODUCT_NAMES[productKey] || 'Overdesk';
 
     var overlay = document.createElement('div');
@@ -126,7 +170,7 @@
     overlay.innerHTML =
       '<div style="background:#141417;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:1.8rem;max-width:380px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.5);">' +
         '<h3 style="color:#fff;font-size:1.05rem;font-weight:800;margin:0 0 0.3rem;">' + productName + '</h3>' +
-        '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0 0 1.3rem;">\u20A6' + formatNgnFull(ngnAmount) + ' \u2014 enter your email to continue to Paystack.</p>' +
+        '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0 0 1.3rem;">' + config.symbol + formatAmountFull(localAmount) + ' \u2014 enter your email to continue to Paystack.</p>' +
         '<input type="email" id="opStackEmail" placeholder="you@example.com" required style="width:100%;box-sizing:border-box;padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-size:0.9rem;margin-bottom:1rem;">' +
         '<button id="opStackContinue" style="width:100%;padding:0.85rem;border:none;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#00d2ff);color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;">Continue to Payment</button>' +
         '<button id="opStackCancel" style="width:100%;padding:0.6rem;border:none;background:none;color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:0.6rem;cursor:pointer;">Cancel</button>' +
@@ -156,21 +200,21 @@
 
       loadPaystackScript(function () {
         document.body.removeChild(overlay);
-        launchPaystackPopup(email, productKey, productName, ngnAmount);
+        launchPaystackPopup(config, email, productKey, productName, localAmount);
       });
     });
   }
 
-  function launchPaystackPopup(email, productKey, productName, ngnAmount) {
+  function launchPaystackPopup(config, email, productKey, productName, localAmount) {
     if (typeof PaystackPop === 'undefined') {
       alert('Payment system is still loading — please try again in a moment.');
       return;
     }
     var handler = PaystackPop.setup({
-      key: PAYSTACK_PUBLIC_KEY,
+      key: config.paystackKey,
       email: email,
-      amount: ngnAmount * 100, // Paystack expects amount in kobo
-      currency: 'NGN',
+      amount: localAmount * 100, // Paystack expects the smallest currency unit (kobo/pesewas/cents)
+      currency: config.currency,
       ref: 'OD-' + productKey + '-' + Date.now(),
       metadata: {
         product: productKey,
@@ -210,11 +254,12 @@
 
   // ---- Boot ----
   detectCountry(function (countryCode) {
-    if (countryCode === 'NG') {
+    var config = countryCode ? COUNTRY_CONFIG[countryCode] : null;
+    if (config) {
       // Price/button swaps happen immediately — Paystack's own script only
       // loads later, at the moment of an actual purchase click.
-      applyNigeriaPricing();
+      applyLocalPricing(config);
     }
-    // Non-Nigerian visitors: do nothing, site behaves exactly as before.
+    // Visitors outside the 5 supported markets: do nothing, site behaves exactly as before.
   });
 })();
