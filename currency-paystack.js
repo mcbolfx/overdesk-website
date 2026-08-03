@@ -4,9 +4,13 @@
    What this does:
    1. Detects if the visitor is in Nigeria (client-side geo-IP lookup, cached).
    2. If Nigerian: swaps displayed prices from USD to NGN (fixed rate below),
-      and swaps "Purchase" buttons to open Paystack's checkout instead of
-      linking straight to Gumroad.
+      and swaps "Purchase" buttons to open a currency-preview + checkout flow
+      via Paystack, instead of linking straight to Gumroad.
    3. Everyone else: site behaves exactly as before (Gumroad links untouched).
+   4. Paystack's own script is only loaded the moment someone actually clicks
+      a purchase button — not proactively for every Nigerian visitor. This is
+      both lighter/faster and avoids loading third-party cookies before the
+      visitor has taken an action (works alongside cookie-consent.js).
 
    IMPORTANT — before this goes live, set your real Paystack PUBLIC key below.
    This is safe to expose in client-side code (it is NOT the secret key).
@@ -28,6 +32,9 @@
     everyone: 'Overdesk Checklist — Everyone Edition'
   };
 
+  function formatNgnFull(ngn) {
+    return ngn.toLocaleString('en-NG');
+  }
   function formatNgnK(ngn) {
     return (ngn % 1000 === 0) ? (ngn / 1000) + 'K' : (ngn / 1000).toFixed(1) + 'K';
   }
@@ -98,7 +105,7 @@
         e.preventDefault();
         var product = btn.getAttribute('data-product');
         var usd = parseFloat(btn.getAttribute('data-usd'));
-        openPaystackFlow(product, usd);
+        openConversionPreview(product, usd);
       });
       // Update button label so it's clear this is a different payment path
       var svg = btn.querySelector('svg');
@@ -108,21 +115,23 @@
     });
   }
 
-  // ---- 3. Tiny email-collection modal, then launch Paystack Inline ----
-  function openPaystackFlow(productKey, usdAmount) {
+  // ---- 3. Simple checkout modal: product, price, email, then Paystack ----
+  function openConversionPreview(productKey, usdAmount) {
     var ngnAmount = Math.round(usdAmount * USD_TO_NGN_RATE);
     var productName = PRODUCT_NAMES[productKey] || 'Overdesk';
 
     var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(6,5,14,0.75);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1.5rem;';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(6,5,14,0.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1.5rem;font-family:Inter,sans-serif;';
+
     overlay.innerHTML =
-      '<div style="background:#141417;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:2rem;max-width:380px;width:100%;font-family:Inter,sans-serif;">' +
-        '<h3 style="color:#fff;font-size:1.1rem;font-weight:800;margin:0 0 0.4rem;">' + productName + '</h3>' +
-        '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0 0 1.2rem;">\u20A6' + formatNgnK(ngnAmount) + ' \u2014 enter your email to continue to Paystack.</p>' +
+      '<div style="background:#141417;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:1.8rem;max-width:380px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.5);">' +
+        '<h3 style="color:#fff;font-size:1.05rem;font-weight:800;margin:0 0 0.3rem;">' + productName + '</h3>' +
+        '<p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin:0 0 1.3rem;">\u20A6' + formatNgnFull(ngnAmount) + ' \u2014 enter your email to continue to Paystack.</p>' +
         '<input type="email" id="opStackEmail" placeholder="you@example.com" required style="width:100%;box-sizing:border-box;padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:#fff;font-size:0.9rem;margin-bottom:1rem;">' +
         '<button id="opStackContinue" style="width:100%;padding:0.85rem;border:none;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#00d2ff);color:#fff;font-weight:700;font-size:0.9rem;cursor:pointer;">Continue to Payment</button>' +
         '<button id="opStackCancel" style="width:100%;padding:0.6rem;border:none;background:none;color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:0.6rem;cursor:pointer;">Cancel</button>' +
       '</div>';
+
     document.body.appendChild(overlay);
 
     var emailInput = overlay.querySelector('#opStackEmail');
@@ -141,8 +150,14 @@
         emailInput.style.borderColor = '#ef4444';
         return;
       }
-      document.body.removeChild(overlay);
-      launchPaystackPopup(email, productKey, productName, ngnAmount);
+      var continueBtn = overlay.querySelector('#opStackContinue');
+      continueBtn.textContent = 'Loading secure payment…';
+      continueBtn.disabled = true;
+
+      loadPaystackScript(function () {
+        document.body.removeChild(overlay);
+        launchPaystackPopup(email, productKey, productName, ngnAmount);
+      });
     });
   }
 
@@ -176,21 +191,29 @@
     handler.openIframe();
   }
 
-  // ---- 4. Load the Paystack Inline script only when needed ----
+  // ---- 4. Load the Paystack Inline script only when someone actually clicks purchase ----
+  var paystackScriptLoading = false;
+  var paystackScriptCallbacks = [];
   function loadPaystackScript(callback) {
     if (typeof PaystackPop !== 'undefined') { callback(); return; }
+    paystackScriptCallbacks.push(callback);
+    if (paystackScriptLoading) return;
+    paystackScriptLoading = true;
     var s = document.createElement('script');
     s.src = 'https://js.paystack.co/v1/inline.js';
-    s.onload = callback;
+    s.onload = function () {
+      paystackScriptCallbacks.forEach(function (cb) { cb(); });
+      paystackScriptCallbacks = [];
+    };
     document.head.appendChild(s);
   }
 
   // ---- Boot ----
   detectCountry(function (countryCode) {
     if (countryCode === 'NG') {
-      loadPaystackScript(function () {
-        applyNigeriaPricing();
-      });
+      // Price/button swaps happen immediately — Paystack's own script only
+      // loads later, at the moment of an actual purchase click.
+      applyNigeriaPricing();
     }
     // Non-Nigerian visitors: do nothing, site behaves exactly as before.
   });

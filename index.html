@@ -2416,6 +2416,7 @@ body.light-mode .nav-early-access:hover{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
+<script src="/cookie-consent.js"></script>
 
 <!-- PROMO TICKER -->
 <div class="hero-video-bg">
@@ -4238,15 +4239,26 @@ void main(){
   var frame = document.getElementById('calendlyFrame');
   var loaded = false;
 
-  // Pre-load the iframe ~2s after page load so it's ready before anyone clicks
+  // Pre-load the iframe ~1.5s after page load, but only if the visitor has
+  // accepted cookies — otherwise it still loads normally the moment they
+  // actually click "Book A Demo" (openCalendlyModal below), which is fine
+  // since that's a direct user action.
   function preload(){
     if(!loaded){ frame.src = CALENDLY_URL; loaded = true; }
   }
-  if(document.readyState === 'complete'){
-    setTimeout(preload, 1500);
-  } else {
-    window.addEventListener('load', function(){ setTimeout(preload, 1500); });
+  function maybePreload(){
+    if (window.odHasCookieConsent && window.odHasCookieConsent()) {
+      if(document.readyState === 'complete'){
+        setTimeout(preload, 1500);
+      } else {
+        window.addEventListener('load', function(){ setTimeout(preload, 1500); });
+      }
+    }
   }
+  maybePreload();
+  document.addEventListener('overdeskCookieConsent', function(e){
+    if (e.detail && e.detail.consent === 'accepted') maybePreload();
+  });
 
   window.openCalendlyModal = function(){
     if(!loaded){ frame.src = CALENDLY_URL; loaded = true; }
