@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overdesk has moved to overdesk.store</title>
+
+<!-- Fallback for visitors with JS disabled — redirects after 0 seconds -->
+<meta http-equiv="refresh" content="0; url=https://overdesk.store/">
+
+<!-- Tells search engines this content now permanently lives at the new domain -->
+<link rel="canonical" href="https://overdesk.store/">
+
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Inter',Arial,sans-serif;
+    background:#0c0c0c;
+    color:#fff;
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;
+    padding:2rem;
+  }
+  .box{max-width:420px;}
+  h1{font-size:1.4rem;font-weight:800;margin-bottom:0.7rem;letter-spacing:-0.02em;}
+  p{color:rgba(255,255,255,0.55);font-size:0.9rem;margin-bottom:1.5rem;line-height:1.5;}
+  a{
+    display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(135deg,#7c3aed,#00d2ff);
+    color:#fff;font-weight:700;font-size:0.9rem;text-decoration:none;
+    padding:0.8rem 1.7rem;border-radius:999px;
+  }
+  .spinner{
+    width:22px;height:22px;border-radius:50%;
+    border:2.5px solid rgba(255,255,255,0.15);
+    border-top-color:#a78bfa;
+    margin:0 auto 1.2rem;
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="spinner"></div>
+  <h1>Overdesk has moved</h1>
+  <p>We've moved to a new address. Redirecting you now — if nothing happens, click below.</p>
+  <a id="manualLink" href="https://overdesk.store/">Continue to overdesk.store</a>
+</div>
+
+<script>
+  // Preserve whatever path/query/hash the visitor was trying to reach,
+  // e.g. overdesk.xyz/checklist-everyday/ -> overdesk.store/checklist-everyday/
+  var target = 'https://overdesk.store' + window.location.pathname + window.location.search + window.location.hash;
+  document.getElementById('manualLink').href = target;
+  window.location.replace(target);
+</script>
+
+</body>
+</html>
